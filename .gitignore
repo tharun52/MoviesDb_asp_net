@@ -1,0 +1,58 @@
+## Visual Studio & Rider ##
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Build outputs ##
+bin/
+obj/
+artifacts/
+
+## Rider caches ##
+.idea/
+*.sln.iml
+
+## Visual Studio cache files ##
+*.cache
+*.ilk
+*.log
+*.tlog
+*.pdb
+
+## Publish folder ##
+publish/
+
+## NuGet ##
+*.nupkg
+# The packages folder can be ignored because of Package Restore
+**/packages/
+# Ignore built packages
+*.snupkg
+
+## Dotnet Core ##
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.msi
+
+## Entity Framework Migrations ##
+**/Migrations/
+
+## User secrets (if used) ##
+secrets.json
+appsettings.Development.json
+
+## Log files ##
+*.log
+logs/
+
+## Database ##
+movies.db
+
+## Mac / Linux system files ##
+.DS_Store
+Thumbs.db

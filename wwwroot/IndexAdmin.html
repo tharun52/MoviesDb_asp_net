@@ -16,7 +16,7 @@
   </head>
   <body>
     <!-- Header -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent py-3 fade-in-down">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent py-3 fade-in-up">
       <div class="container">
         <a class="navbar-brand fs-1 text-white" href="/adminindex">MovieDb Admin</a>      
         <a href="/" class="btn btn-outline-light">Home</a>
@@ -52,79 +52,6 @@
   
     <!-- Bootstrap JS (optional, for dropdowns etc) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-      const searchInput = document.getElementById("searchInput");
-      const sortBySelect = document.getElementById("sortBy");
-      const orderBySelect = document.getElementById("orderBy");
-      const movieGrid = document.getElementById("movieGrid");
-
-      // Handle input change (search)
-      searchInput.addEventListener("input", async () => {
-        const query = searchInput.value;
-        const sortBy = sortBySelect.value;
-        const order = orderBySelect.value;
-
-        const response = await fetch(
-          `/api/movies?search=${encodeURIComponent(
-            query
-          )}&sortBy=${encodeURIComponent(sortBy)}&order=${encodeURIComponent(
-            order
-          )}`
-        );
-        const html = await response.text();
-        movieGrid.innerHTML = html;
-      });
-
-      // Handle sort and order change
-      sortBySelect.addEventListener("change", async () => {
-        const query = searchInput.value;
-        const sortBy = sortBySelect.value;
-        const order = orderBySelect.value;
-
-        const response = await fetch(
-          `/api/movies?search=${encodeURIComponent(
-            query
-          )}&sortBy=${encodeURIComponent(sortBy)}&order=${encodeURIComponent(
-            order
-          )}`
-        );
-        const html = await response.text();
-        movieGrid.innerHTML = html;
-      });
-
-      // Handle order change
-      orderBySelect.addEventListener("change", async () => {
-        const query = searchInput.value;
-        const sortBy = sortBySelect.value;
-        const order = orderBySelect.value;
-
-        const response = await fetch(
-          `/api/movies?search=${encodeURIComponent(
-            query
-          )}&sortBy=${encodeURIComponent(sortBy)}&order=${encodeURIComponent(
-            order
-          )}`
-        );
-        const html = await response.text();
-        movieGrid.innerHTML = html;
-      });
-
-      window.addEventListener("DOMContentLoaded", async () => {
-        const query = "";
-        const sortBy = sortBySelect.value;
-        const order = orderBySelect.value;
-
-        const response = await fetch(
-          `/api/movies?search=${encodeURIComponent(
-            query
-          )}&sortBy=${encodeURIComponent(sortBy)}&order=${encodeURIComponent(
-            order
-          )}`
-        );
-        const html = await response.text();
-        movieGrid.innerHTML = html;
-      });
-    </script>
+    <script src="indexscript.js"></script>
   </body>
 </html>

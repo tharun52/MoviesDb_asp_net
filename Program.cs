@@ -38,11 +38,6 @@ app.MapGet("/api/movies", async (MovieContext db, HttpContext http) =>
     var sortBy = http.Request.Query["sortBy"].ToString();
     var order = http.Request.Query["order"].ToString().ToLower();
 
-    // Set default sort by title ascending
-    if (string.IsNullOrEmpty(sortBy))
-        sortBy = "title";
-    if (string.IsNullOrEmpty(order))
-        order = "asc";
 
     var query = db.Movies.AsQueryable();
 
@@ -151,8 +146,7 @@ app.MapGet("/adminindex", async (MovieContext db, HttpContext context) =>
     }
     else
     {
-        context.Response.Redirect("/adminlogin");
-        return Results.StatusCode(403);
+        return Results.Redirect("/adminlogin");
     }
 });
 

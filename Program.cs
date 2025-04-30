@@ -16,20 +16,6 @@ var app = builder.Build();
 app.UseStaticFiles();
 app.UseSession();
 
-// Main Page
-app.MapGet("/", async (MovieContext db) =>
-{
-    var movies = await db.Movies.ToListAsync();
-    var template = await File.ReadAllTextAsync("wwwroot/index.html");
-
-    var movieCards = GenerateMovieCards(movies);
-
-    var finalHtml = template
-        .Replace("{{MOVIES}}", movieCards)
-        .Replace("{{SEARCH_TERM}}", "");
-
-    return Results.Content(finalHtml, "text/html");
-});
 
 // API for Query in index page
 app.MapGet("/api/movies", async (MovieContext db, HttpContext http) =>
@@ -41,7 +27,7 @@ app.MapGet("/api/movies", async (MovieContext db, HttpContext http) =>
 
     var query = db.Movies.AsQueryable();
 
-    // Apply search filter if needed
+    // Apply search filter
     if (!string.IsNullOrEmpty(search))
     {
         query = query.Where(m => EF.Functions.Like(m.Title, $"%{search}%") ||
@@ -50,7 +36,7 @@ app.MapGet("/api/movies", async (MovieContext db, HttpContext http) =>
                                  EF.Functions.Like(m.Language, $"%{search}%"));
     }
 
-    // Apply sorting (always)
+    // Apply sorting 
     switch (sortBy)
     {
         case "title":
@@ -68,7 +54,7 @@ app.MapGet("/api/movies", async (MovieContext db, HttpContext http) =>
     }
 
 
-    // Fetch movies and round ratings to 2 decimal places
+    // Fetch movies 
     var movies = await query.ToListAsync();
 
     // Round ratings to 2 decimal places
@@ -77,11 +63,13 @@ app.MapGet("/api/movies", async (MovieContext db, HttpContext http) =>
         movie.User_Rating = Math.Round(movie.User_Rating, 2);
     }
 
+    // generate the movie cards and check if admin to show crud functions
     var movieCards = GenerateMovieCards(movies, http.Session.GetString("isAdmin"));
 
     return Results.Content(movieCards, "text/html");
 });
 
+// Generate the movie cards html content
 static string GenerateMovieCards(List<Movie> movies, string isAdmin = "false")
 {
     if (movies.Count == 0)
@@ -119,9 +107,23 @@ static string GenerateMovieCards(List<Movie> movies, string isAdmin = "false")
 }
 
 
+// Main Page
+app.MapGet("/", async (MovieContext db) =>
+{
+    var movies = await db.Movies.ToListAsync();
+    var template = await File.ReadAllTextAsync("wwwroot/index.html");
+
+    var movieCards = GenerateMovieCards(movies);
+
+    var finalHtml = template
+        .Replace("{{MOVIES}}", movieCards)
+        .Replace("{{SEARCH_TERM}}", "");
+
+    return Results.Content(finalHtml, "text/html");
+});
 
 
-// login page Route
+// admin login page route
 app.MapGet("/adminlogin", async context =>
 {
     var html = await File.ReadAllTextAsync("wwwroot/adminlogin.html");
@@ -148,7 +150,7 @@ app.MapPost("/adminlogin", async context =>
     }
 });
 
-
+// route for admin index
 app.MapGet("/adminindex", async (MovieContext db, HttpContext context) =>
 {
     if (context.Session.GetString("isAdmin") == "true")
@@ -156,7 +158,8 @@ app.MapGet("/adminindex", async (MovieContext db, HttpContext context) =>
         var movies = await db.Movies.ToListAsync();
         var template = await File.ReadAllTextAsync("wwwroot/IndexAdmin.html");
 
-        var adminMovieCards = GenerateMovieCards(movies); // See Step 3
+
+        var adminMovieCards = GenerateMovieCards(movies, "true"); 
         var finalHtml = template.Replace("{{MOVIES}}", adminMovieCards).Replace("{{SEARCH_TERM}}", "");
         
         return Results.Content(finalHtml, "text/html");
@@ -167,6 +170,7 @@ app.MapGet("/adminindex", async (MovieContext db, HttpContext context) =>
     }
 });
 
+// delete movie route
 app.MapPost("/deletemovie", async (MovieContext db, HttpContext context) =>
 {
     if (context.Session.GetString("isAdmin") != "true")
@@ -194,6 +198,7 @@ app.MapPost("/deletemovie", async (MovieContext db, HttpContext context) =>
     }
 });
 
+// edit movie route
 app.MapGet("/editmovie", async (MovieContext db, HttpContext context) =>
 {
     if (context.Session.GetString("isAdmin") == "true")
@@ -229,6 +234,7 @@ app.MapGet("/editmovie", async (MovieContext db, HttpContext context) =>
     }
 });
 
+// handle edit
 app.MapPost("/editmovie", async (MovieContext db, HttpContext context) =>
 {
     if (context.Session.GetString("isAdmin") != "true")

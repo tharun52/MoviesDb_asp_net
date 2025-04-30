@@ -44,7 +44,10 @@ app.MapGet("/api/movies", async (MovieContext db, HttpContext http) =>
     // Apply search filter if needed
     if (!string.IsNullOrEmpty(search))
     {
-        query = query.Where(m => EF.Functions.Like(m.Title, $"%{search}%"));
+        query = query.Where(m => EF.Functions.Like(m.Title, $"%{search}%") ||
+                                 EF.Functions.Like(m.Overview, $"%{search}%") ||
+                                 EF.Functions.Like(m.Genres, $"%{search}%") ||
+                                 EF.Functions.Like(m.Language, $"%{search}%"));
     }
 
     // Apply sorting (always)
@@ -78,6 +81,7 @@ app.MapGet("/api/movies", async (MovieContext db, HttpContext http) =>
 
     return Results.Content(movieCards, "text/html");
 });
+
 static string GenerateMovieCards(List<Movie> movies)
 {
     if (movies.Count == 0)

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="./style.css">
+    <style>
+        body {
+            background: linear-gradient(270deg, #23074d, #cc5333);
+        }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent py-3 fade-in-down">
+      <div class="container">
+        <a class="navbar-brand fs-1 text-white" href="/adminindex">MovieDb Admin</a>      
+        <a href="/" class="btn btn-outline-light">Home</a>
+      </div>
+    </nav>
+   <!-- Main Content -->
+   <div class="container py-4 fade-in">
+    <!-- Search & Sort Controls -->
+    <div class="row g-3 mb-4 align-items-center">
+      <div class="col-md-6">
+        <input type="text" id="searchInput" class="form-control form-control-lg" placeholder="Search movies..." value="{{SEARCH_TERM}}"/>
+      </div>
+      <div class="col-md-3">
+        <select id="sortBy" class="form-select form-select-lg">
+          <option value="title" selected>Sort by Title</option>
+          <option value="releasedate">Sort by Release Date</option>
+          <option value="rating">Sort by Rating</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select id="orderBy" class="form-select form-select-lg">
+          <option value="asc" selected>Ascending</option>
+          <option value="desc">Descending</option>
+        </select>
+      </div>
+    </div>
+  
+    <!-- Movie Grid -->
+    <div id="movieGrid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+      {{MOVIES}}
+    </div>
+  
+  
+    <!-- Bootstrap JS (optional, for dropdowns etc) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      const searchInput = document.getElementById("searchInput");
+      const sortBySelect = document.getElementById("sortBy");
+      const orderBySelect = document.getElementById("orderBy");
+      const movieGrid = document.getElementById("movieGrid");
+
+      // Handle input change (search)
+      searchInput.addEventListener("input", async () => {
+        const query = searchInput.value;
+        const sortBy = sortBySelect.value;
+        const order = orderBySelect.value;
+
+        const response = await fetch(
+          `/api/movies?search=${encodeURIComponent(
+            query
+          )}&sortBy=${encodeURIComponent(sortBy)}&order=${encodeURIComponent(
+            order
+          )}`
+        );
+        const html = await response.text();
+        movieGrid.innerHTML = html;
+      });
+
+      // Handle sort and order change
+      sortBySelect.addEventListener("change", async () => {
+        const query = searchInput.value;
+        const sortBy = sortBySelect.value;
+        const order = orderBySelect.value;
+
+        const response = await fetch(
+          `/api/movies?search=${encodeURIComponent(
+            query
+          )}&sortBy=${encodeURIComponent(sortBy)}&order=${encodeURIComponent(
+            order
+          )}`
+        );
+        const html = await response.text();
+        movieGrid.innerHTML = html;
+      });
+
+      // Handle order change
+      orderBySelect.addEventListener("change", async () => {
+        const query = searchInput.value;
+        const sortBy = sortBySelect.value;
+        const order = orderBySelect.value;
+
+        const response = await fetch(
+          `/api/movies?search=${encodeURIComponent(
+            query
+          )}&sortBy=${encodeURIComponent(sortBy)}&order=${encodeURIComponent(
+            order
+          )}`
+        );
+        const html = await response.text();
+        movieGrid.innerHTML = html;
+      });
+
+      window.addEventListener("DOMContentLoaded", async () => {
+        const query = "";
+        const sortBy = sortBySelect.value;
+        const order = orderBySelect.value;
+
+        const response = await fetch(
+          `/api/movies?search=${encodeURIComponent(
+            query
+          )}&sortBy=${encodeURIComponent(sortBy)}&order=${encodeURIComponent(
+            order
+          )}`
+        );
+        const html = await response.text();
+        movieGrid.innerHTML = html;
+      });
+    </script>
+  </body>
+</html>

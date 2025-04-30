@@ -1,0 +1,41 @@
+/* Gradient background */
+body {
+    background: linear-gradient(90deg, #23074d, #cc5333);
+    min-height: 100vh;
+    color: #fff;
+}
+
+/* Fade-in header */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-down {
+    animation: fadeInDown 1s ease-out;
+}
+
+/* Card hover lift + shadow */
+.movie-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.movie-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Input focus glow */
+#searchInput:focus,
+#sortBy:focus,
+#orderBy:focus {
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+    border-color: #fff;
+}

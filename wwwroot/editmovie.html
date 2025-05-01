@@ -19,7 +19,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-transparent py-3 fade-in-up">
         <div class="container">
           <a class="navbar-brand fs-1 text-white" href="/adminindex">Edit  <span class="text-warning">{{MOVIE_TITLE}}</span></a>      
-          <a href="/" class="btn btn-outline-light">Home</a>
+          <a href="/admindex" class="btn btn-outline-light">Home</a>
         </div>
       </nav>
     <div class="container mt-4">
@@ -39,8 +39,18 @@
             </div>
             <div class="mb-3">
                 <label for="language" class="form-label">Language</label>
-                <input type="text" class="form-control" id="language" name="language" value="{{MOVIE_LANGUAGE}}" required>
+                <select class="form-select" id="language" name="languageSelect" onchange="toggleCustomInput()" required>
+                    {{LANGUAGE_OPTIONS}}
+                    <option value="custom">Custom</option>
+                </select>
             </div>
+            
+            <div class="mb-3 d-none" id="customLanguageDiv">
+                <label for="customLanguage" class="form-label">Enter 2-letter Language Code</label>
+                <input type="text" class="form-control" id="customLanguage" name="language" pattern="[a-zA-Z]{2}" title="Enter 2-letter language code">
+            </div>
+            
+            
             <div class="mb-3">
                 <label for="releaseDate" class="form-label">Release Date</label>
                 <input type="date" class="form-control" id="releaseDate" name="releaseDate" value="{{MOVIE_RELEASEDATE}}" required>
@@ -49,5 +59,22 @@
         </form>
         <a href="/adminindex" class="btn btn-secondary mt-3">Back to Admin Dashboard</a>
     </div>
+
+    <script>
+        function toggleCustomInput() {
+            const select = document.getElementById('language');
+            const customDiv = document.getElementById('customLanguageDiv');
+            const customInput = document.getElementById('customLanguage');
+
+            if (select.value === 'custom') {
+                customDiv.classList.remove('d-none');
+                customInput.required = true;
+            } else {
+                customDiv.classList.add('d-none');
+                customInput.required = false;
+            }
+        }
+
+    </script>
 </body>
 </html>

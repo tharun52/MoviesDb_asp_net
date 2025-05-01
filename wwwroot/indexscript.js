@@ -22,6 +22,7 @@ const loadMovies = async () => {
     }
 };
 
+
 // Load on input change, sort and order change
 searchInput.addEventListener("input", loadMovies);
 sortBySelect.addEventListener("change", loadMovies);

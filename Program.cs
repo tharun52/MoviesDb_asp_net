@@ -159,9 +159,9 @@ app.MapGet("/adminindex", async (MovieContext db, HttpContext context) =>
         var template = await File.ReadAllTextAsync("wwwroot/IndexAdmin.html");
 
 
-        var adminMovieCards = GenerateMovieCards(movies, "true"); 
+        var adminMovieCards = GenerateMovieCards(movies, "true");
         var finalHtml = template.Replace("{{MOVIES}}", adminMovieCards).Replace("{{SEARCH_TERM}}", "");
-        
+
         return Results.Content(finalHtml, "text/html");
     }
     else
@@ -198,7 +198,6 @@ app.MapPost("/deletemovie", async (MovieContext db, HttpContext context) =>
     }
 });
 
-// edit movie route
 app.MapGet("/editmovie", async (MovieContext db, HttpContext context) =>
 {
     if (context.Session.GetString("isAdmin") == "true")
@@ -209,13 +208,32 @@ app.MapGet("/editmovie", async (MovieContext db, HttpContext context) =>
             var movie = await db.Movies.FindAsync(movieId);
             if (movie != null)
             {
+                // Fetch distinct language codes from the database
+                var languages = await db.Movies
+                    .Select(m => m.Language)
+                    .Where(lang => !string.IsNullOrEmpty(lang))
+                    .Distinct()
+                    .OrderBy(lang => lang)
+                    .ToListAsync();
+
+                // Build <option> elements and mark the current language as selected
+                var languageOptions = string.Join("\n", languages.Select(lang =>
+                    movie.Language == lang
+                        ? $"<option value=\"{lang}\" selected>{lang}</option>"
+                        : $"<option value=\"{lang}\">{lang}</option>"
+                ));
+
+
+                // Load HTML and inject dynamic content
                 var html = await File.ReadAllTextAsync("wwwroot/editmovie.html");
                 html = html.Replace("{{MOVIE_ID}}", movie.Id.ToString())
                            .Replace("{{MOVIE_TITLE}}", movie.Title)
                            .Replace("{{MOVIE_OVERVIEW}}", movie.Overview)
                            .Replace("{{MOVIE_RATING}}", movie.User_Rating.ToString())
                            .Replace("{{MOVIE_LANGUAGE}}", movie.Language)
-                           .Replace("{{MOVIE_RELEASEDATE}}", movie.Release_Date);
+                           .Replace("{{MOVIE_RELEASEDATE}}", movie.Release_Date)
+                           .Replace("{{LANGUAGE_OPTIONS}}", languageOptions);
+
                 await context.Response.WriteAsync(html);
             }
             else
@@ -249,7 +267,7 @@ app.MapPost("/editmovie", async (MovieContext db, HttpContext context) =>
     var overview = form["overview"];
     var rating = float.Parse(form["rating"]);
     var language = form["language"];
-    
+
     // Convert the release date from the form into a string
     var releaseDate = form["releaseDate"];  // this is a string in "yyyy-MM-dd" format
 
@@ -272,5 +290,29 @@ app.MapPost("/editmovie", async (MovieContext db, HttpContext context) =>
     }
 });
 
+app.MapGet("/addmovie", async (MovieContext db, HttpContext context) =>
+{
+    if (context.Session.GetString("isAdmin") == "true")
+    {
+        var languages = await db.Movies
+           .Select(m => m.Language)
+           .Where(lang => !string.IsNullOrEmpty(lang))
+           .Distinct()
+           .OrderBy(lang => lang)
+           .ToListAsync();
+
+        var languageOptions = string.Join("\n", languages.Select(lang =>
+            $"<option value=\"{lang}\">{lang}</option>"
+        ));
+
+        var html = await File.ReadAllTextAsync("wwwroot/addmovie.html");
+        html = html.Replace("{{LANGUAGE_OPTIONS}}", languageOptions);
+        await context.Response.WriteAsync(html);
+    }
+    else
+    {
+        context.Response.Redirect("/adminlogin");
+    }
+});
 
 app.Run();

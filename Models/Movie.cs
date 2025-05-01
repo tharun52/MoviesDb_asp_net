@@ -10,5 +10,4 @@ public class Movie
     public double User_Rating { get; set; }
     public string ?Genres { get; set; }
     public string ?Language { get; set; }
-    public bool Adult { get; set; }
 }

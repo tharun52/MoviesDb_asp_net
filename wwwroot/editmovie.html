@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,23 +8,25 @@
     <link rel="stylesheet" href="bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="./style.css">
 </head>
+
 <body>
     <style>
         body {
             background: linear-gradient(270deg, #23074d, #cc5333);
         }
     </style>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent py-3 fade-in-up">
-        <div class="container">
-          <a class="navbar-brand fs-1 text-white" href="/adminindex">Edit  <span class="text-warning">{{MOVIE_TITLE}}</span></a>      
-          <a href="/admindex" class="btn btn-outline-light">Home</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent py-3">
+        <div class="container-fluid px-5">
+            <a class="navbar-brand fs-3" href="/adminindex">✏️Edit <span class="text-warning">{{MOVIE_TITLE}}</span>
+            </a>
+            <a href="/adminindex" class="btn btn-outline-light">🏠 Home</a>
         </div>
-      </nav>
+    </nav>
     <div class="container mt-4">
-        <form action="/editmovie" method="post">
+        <form method="post" action="/editmovie" enctype="multipart/form-data">
             <input type="hidden" name="id" value="{{MOVIE_ID}}" />
             <div class="mb-3">
                 <label for="title" class="form-label">Movie Title</label>
@@ -31,12 +34,10 @@
             </div>
             <div class="mb-3">
                 <label for="overview" class="form-label">Overview</label>
-                <textarea class="form-control" id="overview" name="overview" rows="3" required>{{MOVIE_OVERVIEW}}</textarea>
+                <textarea class="form-control" id="overview" name="overview" rows="3"
+                    required>{{MOVIE_OVERVIEW}}</textarea>
             </div>
-            <div class="mb-3">
-                <label for="rating" class="form-label">Rating</label>
-                <input type="number" step="0.1" class="form-control" id="rating" name="rating" value="{{MOVIE_RATING}}" required>
-            </div>
+
             <div class="mb-3">
                 <label for="language" class="form-label">Language</label>
                 <select class="form-select" id="language" name="languageSelect" onchange="toggleCustomInput()" required>
@@ -44,18 +45,45 @@
                     <option value="custom">Custom</option>
                 </select>
             </div>
-            
+
             <div class="mb-3 d-none" id="customLanguageDiv">
                 <label for="customLanguage" class="form-label">Enter 2-letter Language Code</label>
-                <input type="text" class="form-control" id="customLanguage" name="language" pattern="[a-zA-Z]{2}" title="Enter 2-letter language code">
+                <input type="text" class="form-control" id="customLanguage" name="language" pattern="[a-zA-Z]{2}"
+                    title="Enter 2-letter language code">
             </div>
-            
-            
+
+            <div class="mb-3">
+                <label class="form-label">Current Poster</label><br>
+                <img id="posterPreview" src="{{MOVIE_POSTER}}" alt="Poster" style="max-width: 200px;"><br><br>
+
+                <label class="form-label">Update Poster</label><br>
+                <input type="radio" name="posterOption" value="none" checked onchange="togglePosterInput()"> Keep
+                existing
+                <input type="radio" name="posterOption" value="upload" onchange="togglePosterInput()"> Upload new
+                <input type="radio" name="posterOption" value="link" onchange="togglePosterInput()"> Use new link
+
+                <div id="uploadDiv" class="mt-2" style="display: none;">
+                    <input type="file" class="form-control" name="posterUpload" accept="image/*"
+                        onchange="previewPoster(event)">
+                </div>
+
+                <div id="linkDiv" class="mt-2" style="display: none;">
+                    <input type="text" class="form-control" name="posterLink" placeholder="Enter image URL"
+                        oninput="previewLink(event)">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="rating" class="form-label">Rating</label>
+                <input type="number" step="0.1" class="form-control" id="rating" name="rating" value="{{MOVIE_RATING}}"
+                    required>
+            </div>
             <div class="mb-3">
                 <label for="releaseDate" class="form-label">Release Date</label>
-                <input type="date" class="form-control" id="releaseDate" name="releaseDate" value="{{MOVIE_RELEASEDATE}}" required>
+                <input type="date" class="form-control" id="releaseDate" name="releaseDate"
+                    value="{{MOVIE_RELEASEDATE}}" required>
             </div>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="submit" class="btn btn-primary">💾Save Changes</button>
         </form>
         <a href="/adminindex" class="btn btn-secondary mt-3">Back to Admin Dashboard</a>
     </div>
@@ -74,7 +102,33 @@
                 customInput.required = false;
             }
         }
+        function togglePosterInput() {
+            const selected = document.querySelector('input[name="posterOption"]:checked').value;
+            document.getElementById('uploadDiv').style.display = selected === 'upload' ? 'block' : 'none';
+            document.getElementById('linkDiv').style.display = selected === 'link' ? 'block' : 'none';
+        }
+
+        function previewPoster(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById('posterPreview');
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function previewLink(event) {
+            const url = event.target.value;
+            const img = document.getElementById('posterPreview');
+            img.src = url;
+        }
+
+
 
     </script>
 </body>
+
 </html>

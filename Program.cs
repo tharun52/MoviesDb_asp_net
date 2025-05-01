@@ -170,33 +170,6 @@ app.MapGet("/adminindex", async (MovieContext db, HttpContext context) =>
     }
 });
 
-// delete movie route
-app.MapPost("/deletemovie", async (MovieContext db, HttpContext context) =>
-{
-    if (context.Session.GetString("isAdmin") != "true")
-    {
-        context.Response.Redirect("/adminlogin");
-        return;
-    }
-
-    var form = await context.Request.ReadFormAsync();
-    var id = int.Parse(form["id"]);
-
-    var movie = await db.Movies.FindAsync(id);
-    if (movie != null)
-    {
-        db.Movies.Remove(movie);
-        await db.SaveChangesAsync();
-
-        var alert = $"<script>alert('Movie \"{movie.Title}\" has been deleted.'); window.location='/adminindex';</script>";
-        await context.Response.WriteAsync(alert);
-    }
-    else
-    {
-        var alert = "<script>alert('Movie not found.'); window.location='/adminindex';</script>";
-        await context.Response.WriteAsync(alert);
-    }
-});
 
 app.MapGet("/editmovie", async (MovieContext db, HttpContext context) =>
 {
@@ -223,7 +196,6 @@ app.MapGet("/editmovie", async (MovieContext db, HttpContext context) =>
                         : $"<option value=\"{lang}\">{lang}</option>"
                 ));
 
-
                 // Load HTML and inject dynamic content
                 var html = await File.ReadAllTextAsync("wwwroot/editmovie.html");
                 html = html.Replace("{{MOVIE_ID}}", movie.Id.ToString())
@@ -232,7 +204,8 @@ app.MapGet("/editmovie", async (MovieContext db, HttpContext context) =>
                            .Replace("{{MOVIE_RATING}}", movie.User_Rating.ToString())
                            .Replace("{{MOVIE_LANGUAGE}}", movie.Language)
                            .Replace("{{MOVIE_RELEASEDATE}}", movie.Release_Date)
-                           .Replace("{{LANGUAGE_OPTIONS}}", languageOptions);
+                           .Replace("{{LANGUAGE_OPTIONS}}", languageOptions)
+                           .Replace("{{MOVIE_POSTER}}", movie.Poster_Path ?? "");
 
                 await context.Response.WriteAsync(html);
             }
@@ -255,6 +228,7 @@ app.MapGet("/editmovie", async (MovieContext db, HttpContext context) =>
 // handle edit
 app.MapPost("/editmovie", async (MovieContext db, HttpContext context) =>
 {
+    // Ensure the user is an admin
     if (context.Session.GetString("isAdmin") != "true")
     {
         context.Response.Redirect("/adminlogin");
@@ -262,33 +236,59 @@ app.MapPost("/editmovie", async (MovieContext db, HttpContext context) =>
     }
 
     var form = await context.Request.ReadFormAsync();
-    var movieId = int.Parse(form["id"]);
+    int movieId = int.Parse(form["id"]);
+
+    var movie = await db.Movies.FindAsync(movieId);
+
     var title = form["title"];
     var overview = form["overview"];
     var rating = float.Parse(form["rating"]);
     var language = form["language"];
+    var releaseDate = form["releaseDate"];
+    string posterPath = movie.Poster_Path;
 
-    // Convert the release date from the form into a string
-    var releaseDate = form["releaseDate"];  // this is a string in "yyyy-MM-dd" format
-
-    var movie = await db.Movies.FindAsync(movieId);
     if (movie != null)
     {
+
+        if (form["posterOption"] == "upload" && context.Request.Form.Files.Count > 0)
+        {
+            var file = context.Request.Form.Files["posterUpload"];
+            if (file != null && file.Length > 0)
+            {
+                var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
+                Directory.CreateDirectory(uploadsPath); // Ensure folder exists
+
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+                var filePath = Path.Combine(uploadsPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                posterPath = "/uploads/" + fileName;
+            }
+        }
+        else if (form["posterOption"] == "link")
+        {
+            posterPath = form["posterLink"].ToString();
+        }
+
+        // Update fields
         movie.Title = title;
         movie.Overview = overview;
         movie.User_Rating = rating;
         movie.Language = language;
-        movie.Release_Date = releaseDate; // storing it as a string
+        movie.Release_Date = releaseDate;
+        movie.Poster_Path = posterPath;
 
+        // Save changes
         await db.SaveChangesAsync();
+    }
 
-        context.Response.Redirect("/adminindex");
-    }
-    else
-    {
-        context.Response.Redirect("/adminindex");
-    }
+    context.Response.Redirect("/adminindex");
 });
+
 
 app.MapGet("/addmovie", async (MovieContext db, HttpContext context) =>
 {
@@ -312,6 +312,104 @@ app.MapGet("/addmovie", async (MovieContext db, HttpContext context) =>
     else
     {
         context.Response.Redirect("/adminlogin");
+    }
+});
+
+app.MapPost("/addmovie", async (MovieContext db, HttpContext context) =>
+{
+    if (context.Session.GetString("isAdmin") != "true")
+    {
+        context.Response.Redirect("/adminlogin");
+        return;
+    }
+
+    var form = await context.Request.ReadFormAsync();
+
+    var title = form["title"];
+    var overview = form["overview"];
+    var releaseDate = form["releaseDate"];
+    var rating = double.TryParse(form["rating"], out double r) ? r : 0;
+    var genres = form["genres"];
+    var language = form["language"].ToString() == "custom" ? form["customLanguage"].ToString() : form["language"].ToString();
+
+    string posterPath = form["posterLink"];
+
+    // Check if user uploaded a file
+    var file = form.Files["posterUpload"];
+    if (file != null && file.Length > 0)
+    {
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+        if (!Directory.Exists(uploadsFolder))
+        {
+            Directory.CreateDirectory(uploadsFolder);
+        }
+
+        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+        var filePath = Path.Combine(uploadsFolder, fileName);
+
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        // Set the relative path to use in HTML
+        posterPath = "/uploads/" + fileName;
+        Console.WriteLine(posterPath);
+    }
+
+    var movie = new Movie
+    {
+        Title = title,
+        Overview = overview,
+        Release_Date = releaseDate,
+        Poster_Path = posterPath,
+        User_Rating = rating,
+        Genres = genres,
+        Language = language
+    };
+
+    db.Movies.Add(movie);
+    await db.SaveChangesAsync();
+
+    context.Response.Redirect("/adminindex");
+});
+
+
+app.MapPost("/deletemovie", async (MovieContext db, HttpContext context) =>
+{
+    if (context.Session.GetString("isAdmin") != "true")
+    {
+        context.Response.Redirect("/adminlogin");
+        return;
+    }
+
+    var form = await context.Request.ReadFormAsync();
+    var id = int.Parse(form["id"]);
+
+    var movie = await db.Movies.FindAsync(id);
+    if (movie != null)
+    {
+        // Delete associated poster image if it was uploaded (i.e., stored in /uploads/)
+        if (!string.IsNullOrEmpty(movie.Poster_Path) && movie.Poster_Path.StartsWith("/uploads/"))
+        {
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", movie.Poster_Path.TrimStart('/'));
+
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+        }
+
+        db.Movies.Remove(movie);
+        await db.SaveChangesAsync();
+
+        var alert = $"<script>alert('Movie \"{movie.Title}\" has been deleted.'); window.location='/adminindex';</script>";
+        await context.Response.WriteAsync(alert);
+    }
+    else
+    {
+        var alert = "<script>alert('Movie not found.'); window.location='/adminindex';</script>";
+        await context.Response.WriteAsync(alert);
     }
 });
 

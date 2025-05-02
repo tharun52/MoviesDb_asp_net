@@ -24,6 +24,7 @@ function previewPoster(event) {
         reader.onload = function (e) {
             const img = document.getElementById('posterPreview');
             img.src = e.target.result;
+            img.style.display = 'block';
         };
         reader.readAsDataURL(file);
     }
@@ -32,7 +33,13 @@ function previewPoster(event) {
 function previewLink(event) {
     const url = event.target.value;
     const img = document.getElementById('posterPreview');
-    img.src = url;
+    if (url.trim()) {
+        img.src = url;
+        img.style.display = 'block';           // ← show it
+    } 
+    else {
+        img.style.display = 'none';
+    }
 }
 
 function toggleCustomLanguage() {

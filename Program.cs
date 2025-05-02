@@ -62,7 +62,7 @@ app.MapGet("/api/movies", async (MovieContext db, HttpContext http) =>
     {
         movie.User_Rating = Math.Round(movie.User_Rating, 2);
     }
-    
+
     // generate the movie cards and check if admin to show crud functions
     var movieCards = GenerateMovieCards(movies, http.Session.GetString("isAdmin"));
 
@@ -322,7 +322,6 @@ app.MapGet("/addmovie", async (MovieContext db, HttpContext context) =>
     }
 });
 
-// handle adding movies
 app.MapPost("/addmovie", async (MovieContext db, HttpContext context) =>
 {
     if (context.Session.GetString("isAdmin") != "true")
@@ -333,38 +332,59 @@ app.MapPost("/addmovie", async (MovieContext db, HttpContext context) =>
 
     var form = await context.Request.ReadFormAsync();
 
-    var title = form["title"];
+    // check if the title already existis
+    var title = form["title"].ToString().Trim();
+    if (await db.Movies.AnyAsync(m => m.Title == title))
+    {
+        // tiny HTML page that for alert
+        var alertHtml = $@"<!DOCTYPE html>
+            <html lang=""en"">
+            <head>
+            <meta charset=""utf-8"">
+            <title>Duplicate Title</title>
+            </head>
+            <body>
+            <script>
+                alert('Movie \'{title}\' is already present.');
+                window.location = '/addmovie';
+            </script>
+            </body>
+            </html>";
+
+        context.Response.ContentType = "text/html; charset=utf-8";
+        await context.Response.WriteAsync(alertHtml);
+        return;
+    }
+
+
+    // get rest of the fields
     var overview = form["overview"];
     var releaseDate = form["releaseDate"];
     var rating = double.TryParse(form["rating"], out double r) ? r : 0;
     var genres = form["genres"];
-    var language = form["language"].ToString() == "custom" ? form["customLanguage"].ToString() : form["language"].ToString();
+    var language = form["language"] == "custom"
+                        ? form["customLanguage"].ToString()
+                        : form["language"].ToString();
 
     string posterPath = form["posterLink"];
 
-    // for handling poster upload
+    // Handle poster upload
     var file = form.Files["posterUpload"];
     if (file != null && file.Length > 0)
     {
         var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-        if (!Directory.Exists(uploadsFolder))
-        {
-            Directory.CreateDirectory(uploadsFolder);
-        }
+        Directory.CreateDirectory(uploadsFolder);
 
         var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
         var filePath = Path.Combine(uploadsFolder, fileName);
 
-        using (var stream = new FileStream(filePath, FileMode.Create))
-        {
-            await file.CopyToAsync(stream);
-        }
+        using var stream = new FileStream(filePath, FileMode.Create);
+        await file.CopyToAsync(stream);
 
-        // Set the relative path to use in HTML
         posterPath = "/uploads/" + fileName;
-        Console.WriteLine(posterPath);
     }
 
+    // Create and save the new movie
     var movie = new Movie
     {
         Title = title,

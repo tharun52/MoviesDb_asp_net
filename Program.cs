@@ -17,7 +17,7 @@ app.UseStaticFiles();
 app.UseSession();
 
 
-// API for Query in index page
+// API for Querying movie cards
 app.MapGet("/api/movies", async (MovieContext db, HttpContext http) =>
 {
     var search = http.Request.Query["search"].ToString();
@@ -62,14 +62,14 @@ app.MapGet("/api/movies", async (MovieContext db, HttpContext http) =>
     {
         movie.User_Rating = Math.Round(movie.User_Rating, 2);
     }
-
+    
     // generate the movie cards and check if admin to show crud functions
     var movieCards = GenerateMovieCards(movies, http.Session.GetString("isAdmin"));
 
     return Results.Content(movieCards, "text/html");
 });
 
-// Generate the movie cards html content
+// Generate the movie cards html content with admin check
 static string GenerateMovieCards(List<Movie> movies, string isAdmin = "false")
 {
     if (movies.Count == 0)
@@ -107,7 +107,7 @@ static string GenerateMovieCards(List<Movie> movies, string isAdmin = "false")
 }
 
 
-// Main Page
+// User Index Page
 app.MapGet("/", async (MovieContext db) =>
 {
     var movies = await db.Movies.ToListAsync();
@@ -137,7 +137,12 @@ app.MapPost("/adminlogin", async context =>
     var form = await context.Request.ReadFormAsync();
     var password = form["password"];
     var html = await File.ReadAllTextAsync("wwwroot/adminlogin.html");
-    if (password == "1234")
+
+    // read password from appsettings.json to check if admin
+    var config = context.RequestServices.GetRequiredService<IConfiguration>();
+    var storedPassword = config["Admin:Password"];
+
+    if (password == storedPassword)
     {
         context.Session.SetString("isAdmin", "true");
         context.Response.Redirect("/adminindex");
@@ -170,7 +175,7 @@ app.MapGet("/adminindex", async (MovieContext db, HttpContext context) =>
     }
 });
 
-
+// route for edit movie
 app.MapGet("/editmovie", async (MovieContext db, HttpContext context) =>
 {
     if (context.Session.GetString("isAdmin") == "true")
@@ -181,7 +186,7 @@ app.MapGet("/editmovie", async (MovieContext db, HttpContext context) =>
             var movie = await db.Movies.FindAsync(movieId);
             if (movie != null)
             {
-                // Fetch distinct language codes from the database
+                // Fetch distinct language codes from the database for language drop down menu
                 var languages = await db.Movies
                     .Select(m => m.Language)
                     .Where(lang => !string.IsNullOrEmpty(lang))
@@ -250,13 +255,14 @@ app.MapPost("/editmovie", async (MovieContext db, HttpContext context) =>
     if (movie != null)
     {
 
+        // for handling poster upload
         if (form["posterOption"] == "upload" && context.Request.Form.Files.Count > 0)
         {
             var file = context.Request.Form.Files["posterUpload"];
             if (file != null && file.Length > 0)
             {
                 var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
-                Directory.CreateDirectory(uploadsPath); // Ensure folder exists
+                // Directory.CreateDirectory(uploadsPath); // Ensure folder exists
 
                 var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
                 var filePath = Path.Combine(uploadsPath, fileName);
@@ -269,6 +275,7 @@ app.MapPost("/editmovie", async (MovieContext db, HttpContext context) =>
                 posterPath = "/uploads/" + fileName;
             }
         }
+        // for handling poster as link
         else if (form["posterOption"] == "link")
         {
             posterPath = form["posterLink"].ToString();
@@ -282,18 +289,18 @@ app.MapPost("/editmovie", async (MovieContext db, HttpContext context) =>
         movie.Release_Date = releaseDate;
         movie.Poster_Path = posterPath;
 
-        // Save changes
         await db.SaveChangesAsync();
     }
 
     context.Response.Redirect("/adminindex");
 });
 
-
+// route for adding movies
 app.MapGet("/addmovie", async (MovieContext db, HttpContext context) =>
 {
     if (context.Session.GetString("isAdmin") == "true")
     {
+        // Fetch distinct language codes from the database for language drop down menu
         var languages = await db.Movies
            .Select(m => m.Language)
            .Where(lang => !string.IsNullOrEmpty(lang))
@@ -315,6 +322,7 @@ app.MapGet("/addmovie", async (MovieContext db, HttpContext context) =>
     }
 });
 
+// handle adding movies
 app.MapPost("/addmovie", async (MovieContext db, HttpContext context) =>
 {
     if (context.Session.GetString("isAdmin") != "true")
@@ -334,7 +342,7 @@ app.MapPost("/addmovie", async (MovieContext db, HttpContext context) =>
 
     string posterPath = form["posterLink"];
 
-    // Check if user uploaded a file
+    // for handling poster upload
     var file = form.Files["posterUpload"];
     if (file != null && file.Length > 0)
     {
@@ -375,6 +383,7 @@ app.MapPost("/addmovie", async (MovieContext db, HttpContext context) =>
 });
 
 
+// route for deleting movies
 app.MapPost("/deletemovie", async (MovieContext db, HttpContext context) =>
 {
     if (context.Session.GetString("isAdmin") != "true")
@@ -389,7 +398,7 @@ app.MapPost("/deletemovie", async (MovieContext db, HttpContext context) =>
     var movie = await db.Movies.FindAsync(id);
     if (movie != null)
     {
-        // Delete associated poster image if it was uploaded (i.e., stored in /uploads/)
+        // Delete poster image if it was uploaded
         if (!string.IsNullOrEmpty(movie.Poster_Path) && movie.Poster_Path.StartsWith("/uploads/"))
         {
             var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", movie.Poster_Path.TrimStart('/'));

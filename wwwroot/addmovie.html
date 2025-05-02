@@ -81,39 +81,6 @@
             </div>
         </form>
     </div>
-      <script>
-            function toggleCustomLanguage() {
-                var select = document.getElementById("language");
-                var customInput = document.getElementById("customLanguage");
-                customInput.style.display = select.value === "custom" ? "block" : "none";
-            }
-        
-            function togglePosterInput() {
-                const selected = document.querySelector('input[name="posterOption"]:checked').value;
-                document.getElementById('uploadDiv').style.display = selected === 'upload' ? 'block' : 'none';
-                document.getElementById('linkDiv').style.display = selected === 'link' ? 'block' : 'none';
-                document.getElementById('posterPreview').style.display = 'none';
-            }
-
-            function previewPoster(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const img = document.getElementById('posterPreview');
-                        img.src = e.target.result;
-                        img.style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
-                }
-            }
-
-            function previewLink(event) {
-                const url = event.target.value;
-                const img = document.getElementById('posterPreview');
-                img.src = url;
-                img.style.display = url ? 'block' : 'none';
-            }
-      </script>      
+      <script src="addedit.js"></script>      
 </body>
 </html>
